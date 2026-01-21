@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오늘의 식단표</title>
+    <style>
+        /* 노션 스타일의 깔끔한 디자인 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #ffffff;
+            color: #37352f;
+            padding: 20px;
+            margin: 0;
+        }
+        h2 {
+            font-size: 1.2em;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f7f7f5;
+            font-weight: 600;
+        }
+        /* 로딩 중 표시 */
+        #loading { color: #888; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <h2>📅 식단표</h2>
+    <div id="loading">데이터를 불러오는 중...</div>
+    <table id="menuTable" style="display:none;">
+        <thead>
+            <tr id="tableHeader">
+                </tr>
+        </thead>
+        <tbody id="tableBody">
+            </tbody>
+    </table>
+
+    <script>
+        // 1단계에서 찾은 URL 앞부분을 여기에 붙여넣으세요 (물음표 앞까지)
+        // 예: https://api.odcloud.kr/api/15130015/v1/uddi:xxxxx
+        const API_ENDPOINT = "여기에_찾은_URL을_넣으세요"; 
+        
+        // 제공해주신 일반 인증키 (Decoding)
+        const API_KEY = "0JJK3XYNF/+whaTaIsGfjOOZeG9tiojSnTK9QFRJuwDxASYv3/o/GFTKd0p1pUS3cnWs1QK9CWGhH/kt2GFCaQ==";
+
+        async function fetchMenu() {
+            try {
+                // API 호출 (페이지 1, 10개 항목 요청 예시)
+                const url = `${API_ENDPOINT}?page=1&perPage=10&serviceKey=${encodeURIComponent(API_KEY)}`;
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("네트워크 응답 실패");
+                
+                const json = await response.json();
+                const data = json.data; // 실제 데이터 배열
+
+                renderTable(data);
+            } catch (error) {
+                document.getElementById('loading').innerText = "데이터를 불러오는데 실패했습니다: " + error.message;
+            }
+        }
+
+        function renderTable(data) {
+            const loading = document.getElementById('loading');
+            const table = document.getElementById('menuTable');
+            const thead = document.getElementById('tableHeader');
+            const tbody = document.getElementById('tableBody');
+
+            if (data.length === 0) {
+                loading.innerText = "데이터가 없습니다.";
+                return;
+            }
+
+            // 1. 테이블 헤더 생성 (데이터의 키값을 기반으로)
+            const columns = Object.keys(data[0]);
+            columns.forEach(col => {
+                const th = document.createElement('th');
+                th.innerText = col; // 필요시 한글 컬럼명으로 매핑 가능
+                thead.appendChild(th);
+            });
+
+            // 2. 테이블 바디 생성
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                columns.forEach(col => {
+                    const td = document.createElement('td');
+                    td.innerText = row[col] || "-";
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+
+            loading.style.display = 'none';
+            table.style.display = 'table';
+        }
+
+        fetchMenu();
+    </script>
+</body>
+</html>
